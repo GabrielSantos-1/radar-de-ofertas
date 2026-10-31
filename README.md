@@ -52,6 +52,18 @@ uv sync --all-extras
 uv run uvicorn app.main:app --reload
 ```
 
+## Uso
+
+1. Popule o banco com dados fictícios: `uv run python scripts/seed.py`.
+2. Abra `http://127.0.0.1:8000/` para ver a fila de ofertas pendentes.
+3. Aprove uma oferta e confira a prévia com o link de afiliado validado.
+4. Escolha o canal de destino e publique; o envio é registrado no histórico.
+5. Consulte `http://127.0.0.1:8000/historico` para auditar o que já foi enviado.
+
+A mesma oferta não pode ser publicada duas vezes no mesmo canal: a garantia vem de uma
+restrição de unicidade no banco (`UNIQUE (oferta_id, canal_id)`), não apenas de uma
+verificação em código.
+
 ## Testes
 
 ```bash
