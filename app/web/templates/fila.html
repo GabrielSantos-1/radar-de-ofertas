@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Fila de ofertas — Radar de Ofertas{% endblock %}
+{% block content %}
+  <h1>Fila de ofertas</h1>
+  <p>{{ total }} oferta(s) aguardando decisão.</p>
+
+  <form class="filtro" method="get" action="/historico">
+    <div class="campo">
+      <label for="canal-fila">Canal para consultar o histórico</label>
+      <select id="canal-fila" name="canal_id">
+        {% for canal in canais %}
+          <option value="{{ canal.id }}">{{ canal.nome }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button class="secundario" type="submit">Ver histórico</button>
+  </form>
+
+  {% if itens %}
+    <ul class="lista-ofertas">
+      {% for item in itens %}
+        <li>
+          <article class="cartao" aria-labelledby="oferta-{{ item.oferta.id }}">
+            <h2 id="oferta-{{ item.oferta.id }}">{{ item.oferta.titulo }}</h2>
+            <p class="meta">
+              {{ item.loja.nome if item.loja else "Loja não identificada" }} ·
+              Coletada em {{ item.oferta.coletado_em.strftime("%d/%m/%Y %H:%M") }}
+            </p>
+            <p class="precos">
+              <span class="preco-original">De {{ item.oferta.preco_original|moeda }}</span>
+              {% if item.oferta.preco_desconto %}
+                <span class="preco-desconto">Por {{ item.oferta.preco_desconto|moeda }}</span>
+              {% endif %}
+            </p>
+            <p>
+              <span class="selo status-{{ item.oferta.status.value }}">
+                {% if item.oferta.status.value == "pendente" %}
+                  Status: pendente de aprovação
+                {% elif item.oferta.status.value == "aprovada" %}
+                  Status: aprovada, pronta para publicar
+                {% elif item.oferta.status.value == "publicada" %}
+                  Status: publicada
+                {% else %}
+                  Status: descartada
+                {% endif %}
+              </span>
+            </p>
+            <div class="acoes">
+              <a class="botao" href="/ofertas/{{ item.oferta.id }}/previa">Ver prévia</a>
+              {% if item.oferta.status.value == "pendente" %}
+                <form method="post" action="/ofertas/{{ item.oferta.id }}/aprovar">
+                  <button class="secundario" type="submit">Aprovar oferta</button>
+                </form>
+              {% endif %}
+            </div>
+          </article>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="vazio">Nenhuma oferta na fila. Execute a coleta para buscar novidades.</p>
+  {% endif %}
+
+  <nav class="paginacao" aria-label="Paginação da fila de ofertas">
+    {% if page > 1 %}
+      <a href="/?page={{ page - 1 }}" rel="prev">Página anterior</a>
+    {% endif %}
+    <span>Página {{ page }} de {{ total_pages }}</span>
+    {% if page < total_pages %}
+      <a href="/?page={{ page + 1 }}" rel="next">Próxima página</a>
+    {% endif %}
+  </nav>
+{% endblock %}

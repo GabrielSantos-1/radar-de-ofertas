@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Radar de Ofertas{% endblock %}</title>
+  <style>
+    :root {
+      --verde: #0b3d2e;
+      --verde-claro: #d9f2e6;
+      --texto: #1c1c1c;
+      --fundo: #f7f7f5;
+      --superficie: #ffffff;
+      --borda: #6b7280;
+      --link: #0645ad;
+      --foco: #b45309;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--fundo);
+      color: var(--texto);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.5;
+    }
+    .pular-link {
+      position: absolute;
+      left: 0.75rem;
+      top: -4rem;
+      background: var(--superficie);
+      color: var(--link);
+      padding: 0.75rem 1rem;
+      border: 2px solid var(--foco);
+      border-radius: 0.5rem;
+      z-index: 10;
+      min-height: 44px;
+    }
+    .pular-link:focus { top: 0.75rem; }
+    header.topo {
+      background: var(--verde);
+      color: #ffffff;
+      padding: 1rem;
+    }
+    header.topo .conteudo-topo {
+      max-width: 60rem;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: center;
+      justify-content: space-between;
+    }
+    header.topo a { color: #ffffff; }
+    header.topo nav a {
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
+      padding: 0 0.5rem;
+    }
+    .marca { font-size: 1.25rem; font-weight: 700; text-decoration: none; }
+    main {
+      max-width: 60rem;
+      margin: 0 auto;
+      padding: 1rem 1rem 3rem;
+    }
+    main:focus { outline: none; }
+    h1 { font-size: 1.6rem; line-height: 1.25; margin: 1rem 0 0.5rem; }
+    h2 { font-size: 1.2rem; margin: 0 0 0.5rem; }
+    a { color: var(--link); }
+    a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible {
+      outline: 3px solid var(--foco);
+      outline-offset: 2px;
+    }
+    .cartao {
+      background: var(--superficie);
+      border: 1px solid var(--borda);
+      border-radius: 0.75rem;
+      padding: 1rem;
+      margin: 0 0 1rem;
+    }
+    .lista-ofertas, .lista-historico {
+      list-style: none;
+      margin: 1rem 0;
+      padding: 0;
+    }
+    .meta { color: #4b5563; margin: 0 0 0.5rem; }
+    .precos { margin: 0 0 0.5rem; }
+    .preco-original { text-decoration: line-through; color: #4b5563; margin-right: 0.5rem; }
+    .preco-desconto { font-weight: 700; }
+    .selo {
+      display: inline-block;
+      border: 1px solid currentColor;
+      border-radius: 999px;
+      padding: 0.15rem 0.6rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+    .status-pendente { background: #fff4d6; color: #6b3f00; }
+    .status-aprovada { background: var(--verde-claro); color: #0b3d2e; }
+    .status-publicada { background: #dbeafe; color: #063a8f; }
+    .status-descartada { background: #fee2e2; color: #7f1d1d; }
+    .status-ok { background: var(--verde-claro); color: #0b3d2e; }
+    .status-falha { background: #fee2e2; color: #7f1d1d; }
+    .acoes { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; margin-top: 0.75rem; }
+    .botao, button, select, input {
+      min-height: 44px;
+      font: inherit;
+    }
+    .botao, button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      padding: 0.6rem 1rem;
+      border-radius: 0.5rem;
+      border: 2px solid var(--verde);
+      background: var(--verde);
+      color: #ffffff;
+      text-decoration: none;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .botao.secundario, button.secundario {
+      background: var(--superficie);
+      color: var(--verde);
+    }
+    select {
+      padding: 0.5rem;
+      border: 2px solid var(--borda);
+      border-radius: 0.5rem;
+      background: var(--superficie);
+      color: var(--texto);
+    }
+    .filtro, .formulario {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: end;
+      background: var(--superficie);
+      border: 1px solid var(--borda);
+      border-radius: 0.75rem;
+      padding: 1rem;
+      margin: 1rem 0;
+    }
+    .campo { display: flex; flex-direction: column; gap: 0.35rem; }
+    .campo label { font-weight: 600; }
+    .aviso {
+      border-left: 6px solid currentColor;
+      padding: 0.75rem 1rem;
+      border-radius: 0.25rem;
+      background: var(--superficie);
+      margin: 1rem 0;
+    }
+    .aviso.ok { color: #0b3d2e; background: var(--verde-claro); }
+    .aviso.erro { color: #7f1d1d; background: #fee2e2; }
+    .aviso.info { color: #063a8f; background: #dbeafe; }
+    .mensagem {
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      background: #111827;
+      color: #ffffff;
+      padding: 1rem;
+      border-radius: 0.5rem;
+      font-family: ui-monospace, "Cascadia Code", monospace;
+      font-size: 1rem;
+    }
+    .paginacao {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: center;
+      justify-content: center;
+      margin-top: 1.5rem;
+    }
+    .paginacao a {
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
+      padding: 0 0.75rem;
+      border: 2px solid var(--link);
+      border-radius: 0.5rem;
+      background: var(--superficie);
+    }
+    .vazio {
+      background: var(--superficie);
+      border: 1px dashed var(--borda);
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      text-align: center;
+    }
+    .detalhes { margin: 0.5rem 0; }
+    .detalhes dt { font-weight: 700; }
+    .detalhes dd { margin: 0 0 0.5rem; }
+    @media (min-width: 48rem) {
+      .detalhes { display: grid; grid-template-columns: max-content 1fr; gap: 0.25rem 1rem; }
+      .detalhes dd { margin: 0; }
+    }
+  </style>
+</head>
+<body>
+  <a class="pular-link" href="#conteudo">Pular para o conteúdo</a>
+  <header class="topo">
+    <div class="conteudo-topo">
+      <a class="marca" href="/">Radar de Ofertas</a>
+      <nav aria-label="Navegação principal">
+        <a href="/">Fila de ofertas</a>
+        <a href="/historico">Histórico</a>
+      </nav>
+    </div>
+  </header>
+  <main id="conteudo" tabindex="-1">
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

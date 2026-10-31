@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Prévia da oferta — Radar de Ofertas{% endblock %}
+{% block content %}
+  <p><a href="/">Voltar para a fila de ofertas</a></p>
+  <h1>Prévia da oferta</h1>
+
+  {% if erro %}
+    <p class="aviso erro" role="alert"><strong>Não foi possível concluir:</strong> {{ erro }}</p>
+  {% endif %}
+  {% if sucesso %}
+    <p class="aviso ok" role="status"><strong>Concluído:</strong> {{ sucesso }}</p>
+  {% endif %}
+
+  <article class="cartao" aria-labelledby="titulo-oferta">
+    <h2 id="titulo-oferta">{{ oferta.titulo }}</h2>
+    <p class="meta">
+      {{ loja.nome if loja else "Loja não identificada" }} ·
+      Coletada em {{ oferta.coletado_em.strftime("%d/%m/%Y %H:%M") }}
+    </p>
+    <dl class="detalhes">
+      <dt>Preço original</dt>
+      <dd>{{ oferta.preco_original|moeda }}</dd>
+      <dt>Preço com desconto</dt>
+      <dd>
+        {% if oferta.preco_desconto %}
+          {{ oferta.preco_desconto|moeda }}
+        {% else %}
+          Sem desconto informado
+        {% endif %}
+      </dd>
+      <dt>Identificador na loja</dt>
+      <dd>{{ oferta.id_externo }}</dd>
+      <dt>Status da oferta</dt>
+      <dd>
+        <span class="selo status-{{ oferta.status.value }}">
+          {% if oferta.status.value == "pendente" %}
+            Pendente de aprovação
+          {% elif oferta.status.value == "aprovada" %}
+            Aprovada
+          {% elif oferta.status.value == "publicada" %}
+            Publicada
+          {% else %}
+            Descartada
+          {% endif %}
+        </span>
+      </dd>
+    </dl>
+  </article>
+
+  <section class="cartao" aria-labelledby="titulo-link">
+    <h2 id="titulo-link">Link de afiliado</h2>
+    <p><a href="{{ link.link_afiliado }}" rel="noopener noreferrer">{{ link.link_afiliado }}</a></p>
+    {% if link.valido %}
+      <p class="aviso ok">
+        <strong>Link válido.</strong>
+        Resposta HTTP {{ link.status_code }} em {{ link.elapsed_ms }} ms.
+      </p>
+    {% else %}
+      <p class="aviso erro">
+        <strong>Link inválido.</strong>
+        Resposta HTTP {{ link.status_code }} em {{ link.elapsed_ms }} ms.
+        Gere e valide o link novamente antes de publicar.
+      </p>
+    {% endif %}
+    {% if ja_publicada %}
+      <p class="aviso info">
+        <strong>Oferta já publicada neste canal.</strong>
+        A mesma oferta não pode ser enviada duas vezes para o mesmo canal.
+      </p>
+    {% endif %}
+  </section>
+
+  <section class="cartao" aria-labelledby="titulo-mensagem">
+    <h2 id="titulo-mensagem">Mensagem que será enviada</h2>
+    <pre class="mensagem" aria-label="Mensagem pronta para envio">{{ mensagem }}</pre>
+  </section>
+
+  <section class="cartao" aria-labelledby="titulo-acoes">
+    <h2 id="titulo-acoes">Ações</h2>
+    {% if oferta.status.value == "pendente" %}
+      <form method="post" action="/ofertas/{{ oferta.id }}/aprovar" class="formulario">
+        <button type="submit">Aprovar oferta</button>
+      </form>
+    {% endif %}
+
+    {% if canais %}
+      <form method="post" action="/ofertas/{{ oferta.id }}/publicar" class="formulario">
+        <div class="campo">
+          <label for="canal-publicacao">Canal de destino</label>
+          <select id="canal-publicacao" name="canal_id" required>
+            {% for canal in canais %}
+              <option
+                value="{{ canal.id }}"
+                {% if canal_selecionado and canal.id == canal_selecionado.id %}selected{% endif %}
+              >
+                {{ canal.nome }} ({{ canal.tipo.value }})
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        <button type="submit">Publicar oferta</button>
+      </form>
+    {% else %}
+      <p class="aviso info">
+        Nenhum canal ativo cadastrado. Cadastre um canal antes de publicar.
+      </p>
+    {% endif %}
+  </section>
+{% endblock %}

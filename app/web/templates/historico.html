@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Histórico de publicações — Radar de Ofertas{% endblock %}
+{% block content %}
+  <h1>Histórico de publicações</h1>
+
+  {% if erro %}
+    <p class="aviso erro" role="alert"><strong>Não foi possível concluir:</strong> {{ erro }}</p>
+  {% endif %}
+  {% if sucesso %}
+    <p class="aviso ok" role="status"><strong>Concluído:</strong> {{ sucesso }}</p>
+  {% endif %}
+
+  <form class="filtro" method="get" action="/historico">
+    <div class="campo">
+      <label for="canal-historico">Canal</label>
+      <select id="canal-historico" name="canal_id">
+        {% for canal in canais %}
+          <option
+            value="{{ canal.id }}"
+            {% if canal_selecionado and canal.id == canal_selecionado.id %}selected{% endif %}
+          >
+            {{ canal.nome }} ({{ canal.tipo.value }})
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    <button class="secundario" type="submit">Filtrar histórico</button>
+  </form>
+
+  <p>{{ total }} publicação(ões) registrada(s) neste canal.</p>
+
+  {% if itens %}
+    <ul class="lista-historico">
+      {% for item in itens %}
+        <li>
+          <article class="cartao" aria-labelledby="publicacao-{{ item.publicacao.id }}">
+            <h2 id="publicacao-{{ item.publicacao.id }}">
+              {% if item.oferta %}{{ item.oferta.titulo }}{% else %}Oferta removida{% endif %}
+            </h2>
+            <p class="meta">
+              {{ item.canal.nome if item.canal else "Canal removido" }} ·
+              {% if item.publicacao.publicada_em %}
+                Publicada em {{ item.publicacao.publicada_em.strftime("%d/%m/%Y %H:%M") }}
+              {% else %}
+                Tentativa em {{ item.publicacao.criado_em.strftime("%d/%m/%Y %H:%M") }}
+              {% endif %}
+            </p>
+            <p>
+              <span class="selo status-{{ item.publicacao.status_envio.value }}">
+                {% if item.publicacao.status_envio.value == "ok" %}
+                  Status do envio: enviada com sucesso
+                {% else %}
+                  Status do envio: falhou
+                {% endif %}
+              </span>
+            </p>
+            {% if item.publicacao.erro_detalhe %}
+              <p class="aviso erro"><strong>Detalhe do erro:</strong> {{ item.publicacao.erro_detalhe }}</p>
+            {% endif %}
+            <p>
+              <a href="{{ item.publicacao.link_afiliado }}" rel="noopener noreferrer">
+                Abrir link publicado
+              </a>
+            </p>
+          </article>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="vazio">Nenhuma publicação registrada para este canal.</p>
+  {% endif %}
+
+  <nav class="paginacao" aria-label="Paginação do histórico">
+    {% if page > 1 %}
+      <a
+        href="/historico?canal_id={{ canal_selecionado.id if canal_selecionado else '' }}&page={{ page - 1 }}"
+        rel="prev"
+      >Página anterior</a>
+    {% endif %}
+    <span>Página {{ page }} de {{ total_pages }}</span>
+    {% if page < total_pages %}
+      <a
+        href="/historico?canal_id={{ canal_selecionado.id if canal_selecionado else '' }}&page={{ page + 1 }}"
+        rel="next"
+      >Próxima página</a>
+    {% endif %}
+  </nav>
+{% endblock %}
