@@ -16,6 +16,10 @@ RUN uv pip install --system --no-cache . || uv pip install --system --no-cache \
 COPY app ./app
 COPY scripts ./scripts
 
+# o banco vive em /data, que precisa existir antes de o SQLAlchemy tentar abrir o arquivo
+RUN mkdir -p /data
+VOLUME ["/data"]
+
 # banco fica fora da imagem; em PaaS o volume ou o servico gerenciado prove
 ENV DATABASE_URL=sqlite:////data/radar.db
 ENV LINK_TIMEOUT_MS=5000
