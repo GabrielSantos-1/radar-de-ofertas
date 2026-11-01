@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: radar-de-ofertas
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        value: sqlite:////data/radar.db
+      - key: LINK_TIMEOUT_MS
+        value: "5000"
