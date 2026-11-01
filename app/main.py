@@ -46,6 +46,18 @@ def create_app(
     app.state.coletor = coletor or FakeColetor()
 
     app.include_router(router)
+
+    @app.get("/health", tags=["infra"])
+    def health() -> dict[str, str]:
+        """Sonda de saúde para monitoramento e para o futuro deploy.
+
+        Deliberadamente não toca no banco: se este processo responde, está de pé.
+        Uma checagem de dependência aqui faria o monitoramento reiniciar a aplicação
+        por causa de uma indisponibilidade passageira do banco, que é justamente o
+        que não se quer.
+        """
+        return {"status": "ok", "servico": "radar-de-ofertas"}
+
     return app
 
 
