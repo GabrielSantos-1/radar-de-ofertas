@@ -70,6 +70,8 @@ def fila(
     request: Request,
     repo: RepositorioDep,
     page: int = 1,
+    sucesso: str = "",
+    erro: str = "",
 ) -> HTMLResponse:
     settings = request.app.state.settings
     statuses = [OfferStatus.PENDENTE, OfferStatus.APROVADA]
@@ -92,6 +94,8 @@ def fila(
             "page": page,
             "total_pages": total_pages,
             "total": total,
+            "sucesso": sucesso,
+            "erro": erro,
         },
     )
 
@@ -196,6 +200,64 @@ def publicar_oferta(
     sucesso = "Publicação registrada e enviada."
     return RedirectResponse(
         f"/historico?canal_id={quote(canal_id)}&sucesso={quote(sucesso)}",
+        status_code=303,
+    )
+
+
+@router.post("/ofertas/{oferta_id}/aprovar-publicar")
+def aprovar_e_publicar(
+    request: Request,
+    oferta_id: str,
+    repo: RepositorioDep,
+    canal_id: Annotated[str, Form()],
+) -> RedirectResponse:
+    """Aprova e publica em um unico passo, direto da fila.
+
+    Motivado pela primeira rodada de validacao: a representante relatou que
+    percorrer aprovacao e publicacao em telas separadas cobrava esforco demais
+    para uma decisao simples, e as duas reclamaram da lentidao entre escolher
+    a oferta e ela estar publicada. Aqui as duas acoes viram uma requisicao so.
+    """
+    try:
+        oferta = repo.get_oferta(oferta_id)
+        if oferta is None:
+            raise OfertaNaoEncontradaError(f"Oferta {oferta_id} nao encontrada.")
+        if oferta.status is OfferStatus.PENDENTE:
+            aprovar_oferta(oferta_id, repo)
+        # O link era gerado e validado na tela de previa; aqui isso acontece na
+        # mesma requisicao, porque a publicacao depende da validacao.
+        oferta = repo.get_oferta(oferta_id)
+        if oferta is not None:
+            gerar_e_validar_link(
+                oferta,
+                request.app.state.gerador,
+                request.app.state.validator,
+                repo,
+            )
+        publicacao = publicar(
+            oferta_id,
+            canal_id,
+            request.app.state.publicador,
+            repo,
+        )
+    except (OfertaJaPublicadaError, PublicacaoRecusadaError, CanalNaoEncontradoError) as exc:
+        return RedirectResponse(
+            _previa_url(oferta_id, erro=str(exc)),
+            status_code=303,
+        )
+    except OfertaNaoEncontradaError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+    if publicacao.status_envio is SendStatus.FALHA:
+        detalhe = publicacao.erro_detalhe or "Falha desconhecida no envio."
+        return RedirectResponse(
+            _previa_url(oferta_id, erro=detalhe),
+            status_code=303,
+        )
+
+    sucesso = "Oferta aprovada e publicada em um passo."
+    return RedirectResponse(
+        f"/?canal_id={quote(canal_id)}&sucesso={quote(sucesso)}",
         status_code=303,
     )
 

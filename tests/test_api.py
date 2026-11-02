@@ -131,3 +131,55 @@ def test_publicar_com_falha_de_envio_mostra_erro(client, app, sql_repo, seeded) 
     )
     assert resposta.status_code == 200
     assert "Falha simulada" in resposta.text
+
+
+def test_aprovar_e_publicar_em_um_passo(client, app, sql_repo, seeded) -> None:
+    """Fluxo rapido: aprovar e publicar sem sair da fila.
+
+    Pedido da primeira rodada de validacao — a representante relatou dificuldade
+    em percorrer aprovacao e publicacao em telas separadas, e as duas usuarias
+    reclamaram da lentidao entre escolher a oferta e ela estar publicada.
+    """
+    loja, canal = seeded
+    coletar_ofertas(loja, FakeColetor(), sql_repo)
+    ofertas = sql_repo.listar_ofertas(None, 0, 10)
+    alvo = next(item for item in ofertas if "Fone de Ouvido" in item.titulo)
+    assert alvo.status is OfferStatus.PENDENTE
+
+    resposta = client.post(
+        f"/ofertas/{alvo.id}/aprovar-publicar",
+        data={"canal_id": canal.id},
+        follow_redirects=True,
+    )
+    assert resposta.status_code == 200
+    assert "aprovada e publicada em um passo" in resposta.text
+
+    atualizada = sql_repo.get_oferta(alvo.id)
+    assert atualizada is not None
+    assert atualizada.status is OfferStatus.PUBLICADA
+    assert sql_repo.obter_publicacao(alvo.id, canal.id) is not None
+
+
+def test_aprovar_e_publicar_em_oferta_inexistente_retorna_404(client) -> None:
+    assert (
+        client.post(
+            "/ofertas/inexistente/aprovar-publicar",
+            data={"canal_id": "qualquer"},
+        ).status_code
+        == 404
+    )
+
+
+def test_aprovar_e_publicar_com_canal_invalido_mostra_erro(client, app, sql_repo, seeded) -> None:
+    loja, canal = seeded
+    coletar_ofertas(loja, FakeColetor(), sql_repo)
+    ofertas = sql_repo.listar_ofertas(None, 0, 10)
+    alvo = next(item for item in ofertas if "Fone de Ouvido" in item.titulo)
+
+    resposta = client.post(
+        f"/ofertas/{alvo.id}/aprovar-publicar",
+        data={"canal_id": "canal-que-nao-existe"},
+        follow_redirects=True,
+    )
+    assert resposta.status_code == 200
+    assert "não encontrado" in resposta.text

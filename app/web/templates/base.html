@@ -102,6 +102,28 @@
     .status-ok { background: var(--verde-claro); color: #0b3d2e; }
     .status-falha { background: #fee2e2; color: #7f1d1d; }
     .acoes { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; margin-top: 0.75rem; }
+    /* Fluxo rapido: aprovar e publicar sem sair da fila.
+       Pedido da primeira rodada de validacao — a aprovacao exigia trocar de tela
+       e a publicacao demorava; aqui a decisao e o envio acontecem no mesmo lugar. */
+    .acao-rapida {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem;
+      margin-left: auto;
+      padding: 0.4rem 0.6rem;
+      border: 1px dashed var(--borda);
+      border-radius: 0.5rem;
+      background: var(--superficie);
+    }
+    .rotulo-canal { font-size: 0.85rem; color: #374151; font-weight: 600; }
+    .acao-rapida select { min-width: 12rem; }
+    /* Visao ampla: a fila ocupa a largura toda em telas grandes, para a usuaria
+       enxergar varias ofertas e decidir sem rolar. */
+    @media (min-width: 1200px) {
+      .lista-ofertas { display: grid; grid-template-columns: 1fr 1fr; gap: 0 1.25rem; }
+      .lista-ofertas > li { break-inside: avoid; }
+    }
     .botao, button, select, input {
       min-height: 44px;
       font: inherit;

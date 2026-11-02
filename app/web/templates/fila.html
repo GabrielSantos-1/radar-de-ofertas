@@ -16,6 +16,13 @@
     <button class="secundario" type="submit">Ver histórico</button>
   </form>
 
+  {% if sucesso %}
+    <p class="aviso sucesso" role="status">{{ sucesso }}</p>
+  {% endif %}
+  {% if erro %}
+    <p class="aviso erro" role="alert">{{ erro }}</p>
+  {% endif %}
+
   {% if itens %}
     <ul class="lista-ofertas">
       {% for item in itens %}
@@ -50,6 +57,17 @@
               {% if item.oferta.status.value == "pendente" %}
                 <form method="post" action="/ofertas/{{ item.oferta.id }}/aprovar">
                   <button class="secundario" type="submit">Aprovar oferta</button>
+                </form>
+              {% endif %}
+              {% if item.oferta.status.value in ("pendente", "aprovada") %}
+                <form class="acao-rapida" method="post" action="/ofertas/{{ item.oferta.id }}/aprovar-publicar">
+                  <label class="rotulo-canal" for="canal-{{ item.oferta.id }}">Publicar em</label>
+                  <select id="canal-{{ item.oferta.id }}" name="canal_id" required>
+                    {% for canal in canais %}
+                      <option value="{{ canal.id }}">{{ canal.nome }}</option>
+                    {% endfor %}
+                  </select>
+                  <button type="submit">Aprovar e publicar</button>
                 </form>
               {% endif %}
             </div>
